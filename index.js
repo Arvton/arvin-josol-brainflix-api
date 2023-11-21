@@ -8,9 +8,9 @@ app.use("/videos", videosRoutes)
 
 app.use(express.static("public"))
 
-const { PORT, CORS_ORIGIN } = process.env
+const { PORT } = process.env
 
-app.use(cors({ origin: CORS_ORIGIN }))
+app.use(cors())
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`)
