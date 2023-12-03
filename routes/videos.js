@@ -39,10 +39,12 @@ router.get("/", (req, res) => {
 router.post("/", (req, res) => {
     // create an object based on upload form values
     const videos = req.rawVideo
-    const testId = uuid.v4()
-    const timestamp = Date.now()
+    const newVideoId = uuid.v4()
+    const newVideoTimestamp = Date.now()
+    const newCommentId = uuid.v4()
+    const newCommentTimestamp = Date.now()
     const newVideo = {
-        "id": testId,
+        "id": newVideoId,
         "title": req.body.title,
         "channel": "Mrs. Beast",
         "image": `${SERVER_URL}/images/Upload-video-preview.jpg`,
@@ -51,28 +53,14 @@ router.post("/", (req, res) => {
         "likes": "11,985",
         "duration": "3:03",
         "video": "https://project-2-api.herokuapp.com/stream",
-        "timestamp": timestamp,
+        "timestamp": newVideoTimestamp,
         "comments": [
             {
-                "id": "35bba08b-1b51-4153-ba7e-6da76b5ec1b9",
+                "id": newCommentId,
                 "name": "Micheal Lyons",
                 "comment": "They BLEW the ROOF off at their last event, once everyone started figuring out they were going. This is still simply the greatest opening of an event I have EVER witnessed.",
                 "likes": 0,
-                "timestamp": 1628522461000
-            },
-            {
-                "id": "ade82e25-6c87-4403-ba35-47bdff93a51c",
-                "name": "Mattie Casarez",
-                "comment": "This is exactly the kind of advice I’ve been looking for! One minute you’re packing your bags, the next you’re dancing around in the streets without a care in the world.",
-                "likes": 0,
-                "timestamp": 1625250720000
-            },
-            {
-                "id": "f7b9027b-e407-45fa-98f3-7d8a308ddf7c",
-                "name": "Sharon Tillson",
-                "comment": "Amazing footage of an amazing spot! It’s so inspiring to watch the sun rising over a landscape like this. I can only imagine how fresh the air must feel there on a snowy morning.",
-                "likes": 3,
-                "timestamp": 1623002522000
+                "timestamp": newCommentTimestamp
             }
         ]
     }
@@ -92,5 +80,56 @@ router.get("/:id", (req, res) => {
     fullSingleVideo ? res.json(fullSingleVideo) : res.status(404).send("Video with ID not found.")
 })
 
+// handles new comments for a video using it's videoId
+router.post("/:id/comments", (req, res) => {
+    // grab latest data from videos.json
+    const videos = req.rawVideo
+    // grab video id from request
+    const videoId = req.params.id
+    // create an object based on upload form values, create id and timestamp
+    const newCommentId = uuid.v4()
+    const timestamp = Date.now()
+    const newComment = {
+        "id": newCommentId,
+        "name": req.body.name,
+        "comment": req.body.comment,
+        "likes": 0,
+        "timestamp": timestamp
+    }
+    // find video to add new comment to
+    const videoWithNewComment = videos.find(video => video.id === videoId)
+    // add new comment to the video
+    videoWithNewComment.comments.push(newComment)
+    // filter original array to leave out video with new comment
+    const filteredVideoArray = videos.filter(video => video.id !== videoId)
+    // push video with new comment to filtered array
+    filteredVideoArray.push(videoWithNewComment)
+    // stringify updated array to write back to file system
+    const updatedVideoArray = JSON.stringify(filteredVideoArray)
+    fs.writeFile("./data/videos.json", updatedVideoArray, () => res.json(videoWithNewComment.comments))
+    return
+})
+
+// handles delete comments by video id and comment id
+router.delete("/:id/comments/:commentId", (req, res) => {
+    // grab latest data from videos.json
+    const videos = req.rawVideo
+    // grab video id from request
+    const videoId = req.params.id
+    // grab comment id from request
+    const commentId = req.params.commentId
+    // find video to delete comment on
+    const videoToUpdate = videos.find(video => video.id === videoId)
+    const updatedComments = videoToUpdate.comments.filter(comment => comment.id !== commentId)
+    videoToUpdate.comments = updatedComments
+    // filter original array to leave out video with deleted comment
+    const filteredVideoArray = videos.filter(video => video.id !== videoId)
+    //push video with deleted comment to filtered videos
+    filteredVideoArray.push(videoToUpdate)
+    // stringify updated array to write back to file system
+    const updatedVideoArray = JSON.stringify(filteredVideoArray)
+    fs.writeFile("./data/videos.json", updatedVideoArray, () => res.json(updatedComments))
+    return
+})
 
 module.exports = router;
