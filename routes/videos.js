@@ -106,6 +106,7 @@ router.post("/:id/comments", (req, res) => {
     filteredVideoArray.push(videoWithNewComment)
     // stringify updated array to write back to file system
     const updatedVideoArray = JSON.stringify(filteredVideoArray)
+    // send back updated comment array to front end which will be used to change state and re-render comments
     fs.writeFile("./data/videos.json", updatedVideoArray, () => res.json(videoWithNewComment.comments))
     return
 })
@@ -128,6 +129,7 @@ router.delete("/:id/comments/:commentId", (req, res) => {
     filteredVideoArray.push(videoToUpdate)
     // stringify updated array to write back to file system
     const updatedVideoArray = JSON.stringify(filteredVideoArray)
+    // send back updated comment array to front end which will be used to change state and re-render comments
     fs.writeFile("./data/videos.json", updatedVideoArray, () => res.json(updatedComments))
     return
 })
